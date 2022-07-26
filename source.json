@@ -1,0 +1,9 @@
+{
+    "name": "ideaa_demo.people_source",
+    "connector.class": "io.confluent.connect.jdbc.JdbcSourceConnector",
+    "connection.url": "jdbc:oracle:thin:@HOSTNAME:1521/DATABASENAME",
+    "query": "select * from people",
+    "timestamp.column.name": "updated_at",
+    "mode": "timestamp",
+    "poll.interval.ms", "1000"
+}
