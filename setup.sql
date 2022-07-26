@@ -13,4 +13,8 @@ BEGIN
 END;
 /
 
-
+insert into people (name) values ('Zachary Maynard');
+insert into people (name) values ('Dorian Warren');
+insert into people (name) values ('Riley Mosley');
+insert into people (name) values ('Jacques Ibarra');
+insert into people (name) values ('Odell Alvarado');
