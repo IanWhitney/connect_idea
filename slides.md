@@ -89,6 +89,8 @@ https://www.confluent.io/hub/
 
 - If I add a new row to the database, it appears in Kafka
 
+- If I update a row in the database, the change appears in Kafka
+
 - Now we want to use a Sink to move this data in to hoteldev
 
 - Here's our Sink configuration file
@@ -135,3 +137,5 @@ https://www.confluent.io/hub/
 - https://rmoff.net/2018/12/12/streaming-data-from-oracle-into-kafka/
 - https://talks.rmoff.net/ixPL5r/integrating-oracle-and-kafka
 - https://talks.rmoff.net/ScGJTe
+
+- https://docs.confluent.io/kafka-connect-jdbc/current/sink-connector/index.html

@@ -1,0 +1,13 @@
+{
+  "connector.class": "io.confluent.connect.jdbc.JdbcSinkConnector",
+  "name": "ideaa.people-sink",
+  "connection.url": "jdbc:oracle:thin:@//oracle-hotel-tst.oit.umn.edu:1521/hoteltst.oit",
+  "connection.user": "ASR_DEV_USER_WHIT0694",
+  "connection.password": "",
+  "topics": "ideaa.people",
+  "insert.mode": "upsert",
+  "pk.mode": "record_value",
+  "pk.fields": "ID",
+  "auto.create": "true",
+  "table.name.format": "PEOPLE"
+}
