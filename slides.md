@@ -125,3 +125,13 @@ https://www.confluent.io/hub/
 
 - Transforms
 - ksqlDB
+
+
+## Resources
+
+- https://www.confluent.io/blog/kafka-connect-deep-dive-jdbc-source-connector
+- https://docs.confluent.io/kafka-connect-jdbc/current/source-connector/
+- https://dzone.com/articles/kafka-connect-strategies-to-handle-updates-and-del
+- https://rmoff.net/2018/12/12/streaming-data-from-oracle-into-kafka/
+- https://talks.rmoff.net/ixPL5r/integrating-oracle-and-kafka
+- https://talks.rmoff.net/ScGJTe
