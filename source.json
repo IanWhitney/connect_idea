@@ -1,9 +1,14 @@
 {
-    "name": "ideaa_demo.people_source",
-    "connector.class": "io.confluent.connect.jdbc.JdbcSourceConnector",
-    "connection.url": "jdbc:oracle:thin:@HOSTNAME:1521/DATABASENAME",
-    "query": "select * from people",
-    "timestamp.column.name": "updated_at",
-    "mode": "timestamp",
-    "poll.interval.ms", "1000"
+  "connector.class": "io.confluent.connect.jdbc.JdbcSourceConnector",
+  "name": "ideaa.people-source",
+  "topic.prefix": "ideaa.people",
+  "query": "select * from people",
+  "mode": "timestamp+incrementing",
+  "timestamp.column.name": "UPDATED_AT",
+  "incrementing.column.name": "ID",
+  "poll.interval.ms": "1000",
+  "numeric.mapping": "best_fit",
+  "connection.url": "jdbc:oracle:thin:@//oracle-hotel-dev.oit.umn.edu:1521/hoteldev.oit",
+  "connection.user": "ASR_DEV_USER_WHIT0694",
+  "connection.password": ""
 }

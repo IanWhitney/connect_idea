@@ -67,6 +67,8 @@ https://www.confluent.io/hub/
 
 - First, here's our hoteldev table, `people`
   - Pretty basic, it has an id, name column and timestamps to show when each row was created and updated
+  - It also implements soft deletion, so there's a y/n value to show if the record is deleted
+    - We'll talk more about that in a minute
 
 - Here's our hoteltst database.
   - It has no `people` table
