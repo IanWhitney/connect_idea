@@ -118,6 +118,10 @@ https://www.confluent.io/hub/
 
 ---
 
+_demo movie here_
+
+---
+
 # Real World Considerations
 
 - As with most demos, that looked really easy.
@@ -168,10 +172,12 @@ https://www.confluent.io/hub/
 
 ---
 
-## No Timestamps and Hard Deletes
-# Why Is This A Problem?
+# No Timestamps and Hard Deletes
+## Why Is This A Problem?
 
 [.column]
+
+### Your Source Query
 ```sql
 SELECT
   *
@@ -181,6 +187,7 @@ FROM
 
 [.column]
 
+### What Connect Executes
 ```sql
 SELECT
   *
@@ -207,7 +214,10 @@ WHERE
 ---
 
 # ROWSCN
-## Your Source Query
+
+[.column]
+
+### Your Source Query
 
 ```sql
 SELECT
@@ -215,6 +225,20 @@ SELECT
   people.*
 FROM
   people
+```
+
+[.column]
+
+### What Connect Executes
+
+```sql
+SELECT
+  ora_rowscn AS source_rowscn,
+  people.*
+FROM
+  people
+WHERE
+  ora_rowscn > last_rowscn
 ```
 
 ---
@@ -244,7 +268,22 @@ FROM
 --- 
 
 # Bulk Imports
-## Your Source Query
+
+[.column]
+
+### Your Source Query
+
+```sql
+SELECT
+  systimestamp AS version,
+  people.*
+FROM
+  people
+```
+
+[.column]
+
+### What Connect Executes
 
 ```sql
 SELECT
