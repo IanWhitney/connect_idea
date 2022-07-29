@@ -1,133 +1,309 @@
-# Kafka Connect
+theme: Letters from Sweden, 4
 
-## Big Picture
+# [fit] Kafka Connect
 
-- Written as an integration platform to gather data from a wide variety of sources
-- Stores each set of data in a Topic
-- Data is guaranteed to be in order it was received, and can be retained for as long as you want
+---
 
-## Connect
+# [fit] Kafka
 
-- The most common use case was "I want to put data from here and then send it there"
+---
+
+# Kafka
+- Data integration platform
+- Open Source (Apache)
+- Highly scalable, reliable and available
+
+---
+
+# Kafka (cont.)
+- Stores data in Topics
+  - Retain for as long as you want
+  - High-throughput writes
+  - Immutable and data order is guaranteed
+
+---
+
+# [fit] Connect
+
+---
+
+# Connect
+There is a very common use case for Kafka
+
+> I want to take data from here and move it there
+
+---
+
+# Connect
+
 - These all looked pretty much the same
+  - How to connect to Kafka
   - How to get the data
   - Where to put the data
   - How to find new data
-  - How often to check
+  - How often to check for new data
   - Etc.
 
-- Kafka Connect wraps up that use case in to a simple tool
+---
+
+# Connect
+
+- Connect wraps up that use case in to a simple tool
 - Boiler plate is handled by Connect, all you provide is a small configuration file
+- Connect then spins up a worker that does the work
 
-## Sources
+---
 
-In Kafka terminology, a 'Source' is a place you get data from. 
+# [fit] Data
+## Sources and Sinks
 
-Today I'll be using an Oracle database as my Source, but there are lots of other types of sources
+---
+
+# Sources
+
+[.column]
+
+In Connect terminology, a 'Source' is a worker that gets data from somewhere and puts it in Kafka.
+
+[.column]
 
 - Databases
 - Key/Value stores (e.g., Redis)
 - Message queues (e.g., SQS or RabbitMQ)
 - Files
-- Other Kafka topics
+- More!
 
-### Sinks
+---
 
-The place that you're sending data too is called a Sink.
+# Sinks
 
-You don't have to have a sink. Maybe you're just keeping the data in Kafka until you figure out what to do with it.
+[.column]
 
-You can have as many sinks as you want for a single set of data. So, you could get one set of data from a Source and then send it to
+Workers that take data from Kafka and put it somewhere else are called Sinks.
+
+You can have as many sinks as you want for a single set of data. 
+
+Reading the data does not delete it.
+
+[.column]
 
 - Another database
 - A key/value cache
 - A message queue
-- Splunk
+- A file
+- An external system (e.g. Splunk)
 - Another Kafka topic
 
-- Each Sink is independent and has no impact on the other sinks.
-  - This is different from something like Amazon SQS, where data is removed when it is read
+---
 
-## Actual combinations
+# Actual Usage
 
-Some examples of Connect combinations in current use at UMN
+Some examples of Connect in current use at UMN
 
 - Source data from a vendor's MSSQL database
 - Sink application log data to Splunk
 - Sink event stream data to Amazon SQS
 - Source Amazon SQS data as a work queue
 
-## Available Connectors
+---
+
+# Available Connectors
 
 https://www.confluent.io/hub/
 
-## Demo of Actual Usage
+---
 
-- We're going to move data from hoteldev to hoteltst
+# [fit] Demo
+## Move data <br />From `hoteldev` <br />Into `hoteltst`
 
-- First, here's our hoteldev table, `people`
-  - Pretty basic, it has an id, name column and timestamps to show when each row was created and updated
-  - It also implements soft deletion, so there's a y/n value to show if the record is deleted
-    - We'll talk more about that in a minute
+---
 
-- Here's our hoteltst database.
-  - It has no `people` table
+# Real World Considerations
 
-- First we want to get this data in to Kafka, we need a Source
+- As with most demos, that looked really easy.
 
-- Here's a Kafka connect configuration file for our Source
-  - Name to identify our worker
-  - What kind of Source it is
-  - How to connect to the database
-  - A very simple query
-  - How to identify new or updated records
-  - How often to check
+- But as you watched it, you probably though of lots of real world complications
 
-- We add this configuration to Connect via a REST API
+---
 
-- If we then look at Kafka we can see a topic and it contains all our data
+# Real World Considerations
+## Different Databases
 
-- If I add a new row to the database, it appears in Kafka
+[.column]
 
-- If I update a row in the database, the change appears in Kafka
+- What if I want to move data from Oracle to MySQL, which has different datatypes
 
-- Now we want to use a Sink to move this data in to hoteldev
+[.column]
 
-- Here's our Sink configuration file
+- The Kafka Sink worker does a pretty good job of converting between databases
+- Or, you could `cast` in your Source query to get things in to a datatype that both database share 
 
-- We add that via the same REST API
+---
 
-- Now if we look at the hoteltst database we see there's a `person` table
+# Real World Considerations
+## Table Structure Changes
 
-- And if I add a new row in `hoteldev` it appears in `hoteltst`
+[.column]
 
-- And if I update a row in `hoteldev` that update appears in `hoteltst`
+- What if the structure of the `people` table changes in `hoteldev`?
 
-## Real World Considerations
+[.column]
 
-- The source table structure is changing
-  - Use `select [columns]` instead of `select *`
-  - Kafka supports the evolution of data sets, as long as you follow certain rules
+- In some cases Kafka will just handle it
+- Select specific columns, not `select *`
+- If these don't solve the problem then there are other ways of handling this
 
-- My source and sink databases are not the same type
-  - The JDBC connectors do a pretty good job of converting between DBMS
+---
 
-- Hard record deletion
-- No timestamps
+# Real World Considerations
+## No Timestamps and Hard Deletes
 
-## But what if there are hard deletes? Or no timestamps
+[.column]
 
-- CDC Layer Tool
+- My source database doesn't have timestamps. And we hard delete records.
 
-- Retrieves Inserts/Updates/Deletes directly from the database logs
-- Stores them in Kafka
-- Then you apply those same changes to your sink database
+[.column]
 
-## Other
+- Ah! This is where things get interesting
 
-- Transforms
-- ksqlDB
+---
 
+## No Timestamps and Hard Deletes
+# Why Is This A Problem?
+
+[.column]
+```sql
+SELECT
+  *
+FROM
+  people
+```
+
+[.column]
+
+```sql
+SELECT
+  *
+FROM
+  people
+WHERE 
+  updated_at > cutoff_timestamp
+  OR
+  id > cutoff_id
+```
+
+^ - How does the Source work? If you dig in to it, it's pretty simple
+^ - If that query returns anything, the data is added to Kafka.
+^ - But how can that work if your database table doesn't have an incrementing primary key or timestamp?
+^ - There are different answers depending on what you need?
+
+---
+
+# No Timestamp Columns?
+## Use ROWSCN
+- Oracle identifies transactions with a monotonically increasing number
+- Can be used to identify new and changed rows
+
+---
+
+# ROWSCN
+## Your Source Query
+
+```sql
+SELECT
+  ora_rowscn AS source_rowscn,
+  people.*
+FROM
+  people
+```
+
+---
+
+# ROWSCN
+
+[.column]
+
+## Pros
+- Gets updates and inserts
+
+[.column]
+
+## Cons
+- Won't get hard deletes
+- You'll still need a primary key to update records in your Sink
+- Not all RDBMS have this kind of column
+
+---
+
+# No Primary Key?
+## Use Bulk Imports
+
+- Bring in all table data on a schedule
+- Use an automated job to remove old imports
+
+--- 
+
+# Bulk Imports
+## Your Source Query
+
+```sql
+SELECT
+  systimestamp AS version,
+  people.*
+FROM
+  people
+```
+
+---
+
+# Bulk Imports
+
+[.column]
+
+**Pro**
+- Does get all inserts, updates, _and hard deletes_
+- Congratulations, you've now recreated PS Snap!
+
+[.column]
+
+**Con**
+- Not a good near-live solution
+- Might miss transactions that are occurring while it's extracting data
+- Congratulations, you've now recreated PS Snap!
+
+---
+
+# No primary key or timestamps?
+# Use CDC 
+- Your table may not have a clear way of identifying new or updated records
+- But your database knows exactly what happened
+- This history is stored in a replication log
+
+```
+- Row inserted in to People, values 1, 'I Wihtney', 0,...
+- Row id 1 updated in People, name changed to 'Ian Whitney'
+- Row id 1 deleted in People
+```
+
+- It doesn't look exactly like that, but that's the kind of stuff it contains
+
+--- 
+
+# CDC
+
+- We've been using a Source that queries from a database
+- But if we use a Source that reads the database's replication log
+- All the database changes end up in Kafka
+- Including deletes
+
+- We can then use a CDC Sink to replicate those changes in a another database.
+
+- Near-live
+- All changes
+
+- Requires access to replication data, which you may or may not have.
+
+---
 
 ## Resources
 
