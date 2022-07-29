@@ -168,7 +168,8 @@ _demo movie here_
 
 [.column]
 
-- Ah! This is where things get interesting
+- Ah! You're using PeopleSoft
+- This is where things get interesting
 
 ---
 
@@ -299,13 +300,13 @@ FROM
 
 [.column]
 
-**Pro**
+## Pros
 - Does get all inserts, updates, _and hard deletes_
 - Congratulations, you've now recreated PS Snap!
 
 [.column]
 
-**Con**
+## Cons
 - Not a good near-live solution
 - Might miss transactions that are occurring while it's extracting data
 - Congratulations, you've now recreated PS Snap!
@@ -314,33 +315,27 @@ FROM
 
 # No primary key or timestamps?
 # Use CDC 
-- Your table may not have a clear way of identifying new or updated records
-- But your database knows exactly what happened
-- This history is stored in a replication log
 
-```
-- Row inserted in to People, values 1, 'I Wihtney', 0,...
-- Row id 1 updated in People, name changed to 'Ian Whitney'
-- Row id 1 deleted in People
-```
-
-- It doesn't look exactly like that, but that's the kind of stuff it contains
+- Databases logs every insert, update, and delete
+- We can create a Source that ingests these logs in to Kafka
+- And then use Sink(s) to replicate those changes
 
 --- 
 
 # CDC
 
-- We've been using a Source that queries from a database
-- But if we use a Source that reads the database's replication log
-- All the database changes end up in Kafka
-- Including deletes
+[.column]
 
-- We can then use a CDC Sink to replicate those changes in a another database.
-
+## Pros
 - Near-live
-- All changes
+- Includes all inserts, updates, _and hard deletes_
 
-- Requires access to replication data, which you may or may not have.
+
+[.column]
+
+## Cons
+- Requires access to database replication logs
+- Harder to setup than a query-based Source/Sink
 
 ---
 
