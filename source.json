@@ -1,6 +1,6 @@
 {
-  "connector.class": "io.confluent.connect.jdbc.JdbcSourceConnector",
   "name": "ideaa.people-source",
+  "connector.class": "io.confluent.connect.jdbc.JdbcSourceConnector",
   "topic.prefix": "ideaa.people",
   "query": "select * from people",
   "mode": "timestamp+incrementing",
