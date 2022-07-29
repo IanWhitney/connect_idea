@@ -345,7 +345,21 @@ FROM
 - https://docs.confluent.io/kafka-connect-jdbc/current/source-connector/
 - https://dzone.com/articles/kafka-connect-strategies-to-handle-updates-and-del
 - https://rmoff.net/2018/12/12/streaming-data-from-oracle-into-kafka/
+
+---
+
+## Resources (cont.)
 - https://talks.rmoff.net/ixPL5r/integrating-oracle-and-kafka
 - https://talks.rmoff.net/ScGJTe
-
 - https://docs.confluent.io/kafka-connect-jdbc/current/sink-connector/index.html
+
+--- 
+
+## Links
+
+- [These slides](https://z.umn.edu/connect_ideaa) (https://z.umn.edu/connect_ideaa)
+- [The demo video](https://z.umn.edu/connect_ideaa_demo) (https://z.umn.edu/connect_ideaa_demo)
+- Me
+  - whit0694@umn.edu
+  - `ian_whitney` on the Tech People Slack (https://tech-people.umn.edu/join-slack)
+  - Or just hop in the `#kafka` channel
