@@ -1,6 +1,7 @@
-theme: Letters from Sweden, 4
+theme: work, 7
+footer: https://z.umn.edu/connect_ideaa
 
-# [fit] Kafka Connect
+# [fit] Kafka<br />Connect
 
 ---
 
@@ -18,7 +19,7 @@ theme: Letters from Sweden, 4
 # Kafka (cont.)
 - Stores data in Topics
   - Retain for as long as you want
-  - High-throughput writes
+  - Can be read multiple times
   - Immutable and data order is guaranteed
 
 ---
@@ -28,21 +29,17 @@ theme: Letters from Sweden, 4
 ---
 
 # Connect
-There is a very common use case for Kafka
 
 > I want to take data from here and move it there
 
----
-
-# Connect
-
-- These all looked pretty much the same
+[.column]
   - How to connect to Kafka
   - How to get the data
+
+[.column]
   - Where to put the data
   - How to find new data
   - How often to check for new data
-  - Etc.
 
 ---
 
@@ -54,7 +51,7 @@ There is a very common use case for Kafka
 
 ---
 
-# [fit] Data
+# [fit] Workers
 ## Sources and Sinks
 
 ---
@@ -68,8 +65,10 @@ In Connect terminology, a 'Source' is a worker that gets data from somewhere and
 [.column]
 
 - Databases
-- Key/Value stores (e.g., Redis)
-- Message queues (e.g., SQS or RabbitMQ)
+- Key/Value stores
+  - e.g., Redis
+- Message queues 
+  - e.g., SQS
 - Files
 - More!
 
@@ -83,16 +82,15 @@ Workers that take data from Kafka and put it somewhere else are called Sinks.
 
 You can have as many sinks as you want for a single set of data. 
 
-Reading the data does not delete it.
-
 [.column]
 
-- Another database
-- A key/value cache
-- A message queue
-- A file
-- An external system (e.g. Splunk)
-- Another Kafka topic
+- Database
+- key/value store
+- Message queue
+- File
+- External system 
+  - e.g. Splunk
+- More!
 
 ---
 
@@ -107,7 +105,10 @@ Some examples of Connect in current use at UMN
 
 ---
 
-# Available Connectors
+# Connect Worker Options
+
+- Lots!
+- We're going to demo JDBC Source and Sink
 
 https://www.confluent.io/hub/
 
@@ -118,7 +119,10 @@ https://www.confluent.io/hub/
 
 ---
 
-_demo movie here_
+[.hide-footer]
+[.slidecount: false]
+
+![autoplay](demo.mp4)
 
 ---
 
@@ -128,14 +132,166 @@ _demo movie here_
 
 - But as you watched it, you probably though of lots of real world complications
 
+- It will help if we understand what our Source and Sink workers are doing.
+
 ---
 
-# Real World Considerations
-## Different Databases
+# What Our Source Worker Does
 
 [.column]
 
-- What if I want to move data from Oracle to MySQL, which has different datatypes
+## Our Source Query
+
+```sql
+SELECT
+  *
+FROM
+  people
+```
+
+## What Connect Executes
+
+```sql
+SELECT
+  *
+FROM
+  people
+WHERE
+  updated_at > last_time_i_checked
+  OR
+  id > biggest_id_i_have_seen
+```
+
+[.column]
+
+- Any rows returned by the query are written to Kafka topic
+- Won't return hard deletes
+- `updated_at` needed to find changed records
+- `id` needed to find new records
+
+---
+
+# What Our Sink Worker Does
+
+[.column]
+
+## Our Sink Command
+
+```sql
+MERGE INTO PEOPLE USING dual on ( id=21 )
+WHEN MATCHED THEN
+  UPDATE SET name='updated',
+    created_at=1659533399130,
+    updated_at=1659533399130,
+WHEN NOT MATCHED THEN
+  INSERT
+    (id, name, created_at, updated_at)
+  VALUES
+    (21, 'updated', 1659533399130, 1659533399130)
+```
+
+[.column]
+
+- Requires a way to uniquely identify a row
+
+---
+
+# Some possible solutions
+
+- Use `ora_rowscn`
+- Do bulk imports
+- CDC
+- Roll your own
+
+---
+
+# Use `ora_rowscn`
+
+- Oracle identifies transactions with a unique number
+- Used by Connect to identify Inserts and Updates
+
+[.column]
+
+## Pros
+
+- Get updates and inserts without primary key or timestamp columns
+
+[.column]
+
+## Cons
+
+- Won't get hard deletes
+- Still need a primary key to use `upsert`
+- Oracle specific
+
+--- 
+
+# Bulk imports
+
+- Connect can get all records at once -- "Bulk" import
+- Sink does a "Bulk" write of all records to the target 
+
+[.column]
+
+## Pros
+
+- Get updates and inserts **and deletes**
+- You have recreated PS Snap! 🎊
+
+[.column]
+
+## Cons
+
+- Not a near-live solution
+- You have recreated PS Snap! 🎊
+
+--- 
+
+# CDC
+
+- Uses DB replication logs, not the tables, as the Source
+- Sink replays those logs against your targets
+
+[.column]
+
+## Pros
+
+- Get updates and inserts **and deletes**
+- Near-live
+
+[.column]
+
+## Cons
+
+- Requires escalated database access
+- Config is more complex
+
+---
+
+# Roll Your Own
+
+- Connect was meant to make 80% of common tasks easier
+- But for special cases you can bypass Connect and write your own
+
+[.column]
+
+## Pros
+
+- Implements exactly the logic you need
+
+[.column]
+
+## Cons
+
+- Writing and maintenance is on you
+
+---
+
+# Datatypes
+
+[.column]
+
+What if I want to move data from Oracle to MySQL, which has different datatypes?
 
 [.column]
 
@@ -144,222 +300,37 @@ _demo movie here_
 
 ---
 
-# Real World Considerations
-## Table Structure Changes
+# Schema Evolution
 
 [.column]
 
-- What if the structure of the `people` table changes in `hoteldev`?
+What if the structure of the `people` table changes in `hoteldev`?
 
 [.column]
 
 - In some cases Kafka will just handle it
 - Select specific columns, not `select *`
-- If these don't solve the problem then there are other ways of handling this
-
----
-
-# Real World Considerations
-## No Timestamps and Hard Deletes
-
-[.column]
-
-- My source database doesn't have timestamps. And we hard delete records.
-
-[.column]
-
-- Ah! You're using PeopleSoft
-- This is where things get interesting
-
----
-
-# No Timestamps and Hard Deletes
-## Why Is This A Problem?
-
-[.column]
-
-### Your Source Query
-```sql
-SELECT
-  *
-FROM
-  people
-```
-
-[.column]
-
-### What Connect Executes
-```sql
-SELECT
-  *
-FROM
-  people
-WHERE 
-  updated_at > cutoff_timestamp
-  OR
-  id > cutoff_id
-```
-
-^ - How does the Source work? If you dig in to it, it's pretty simple
-^ - If that query returns anything, the data is added to Kafka.
-^ - But how can that work if your database table doesn't have an incrementing primary key or timestamp?
-^ - There are different answers depending on what you need?
-
----
-
-# No Timestamp Columns?
-## Use ROWSCN
-- Oracle identifies transactions with a monotonically increasing number
-- Can be used to identify new and changed rows
-
----
-
-# ROWSCN
-
-[.column]
-
-### Your Source Query
-
-```sql
-SELECT
-  ora_rowscn AS source_rowscn,
-  people.*
-FROM
-  people
-```
-
-[.column]
-
-### What Connect Executes
-
-```sql
-SELECT
-  ora_rowscn AS source_rowscn,
-  people.*
-FROM
-  people
-WHERE
-  ora_rowscn > last_rowscn
-```
-
----
-
-# ROWSCN
-
-[.column]
-
-## Pros
-- Gets updates and inserts
-
-[.column]
-
-## Cons
-- Won't get hard deletes
-- You'll still need a primary key to update records in your Sink
-- Not all RDBMS have this kind of column
-
----
-
-# No Primary Key?
-## Use Bulk Imports
-
-- Bring in all table data on a schedule
-- Use an automated job to remove old imports
-
---- 
-
-# Bulk Imports
-
-[.column]
-
-### Your Source Query
-
-```sql
-SELECT
-  systimestamp AS version,
-  people.*
-FROM
-  people
-```
-
-[.column]
-
-### What Connect Executes
-
-```sql
-SELECT
-  systimestamp AS version,
-  people.*
-FROM
-  people
-```
-
----
-
-# Bulk Imports
-
-[.column]
-
-## Pros
-- Does get all inserts, updates, _and hard deletes_
-- Congratulations, you've now recreated PS Snap!
-
-[.column]
-
-## Cons
-- Not a good near-live solution
-- Might miss transactions that are occurring while it's extracting data
-- Congratulations, you've now recreated PS Snap!
-
----
-
-# No primary key or timestamps?
-# Use CDC 
-
-- Databases logs every insert, update, and delete
-- We can create a Source that ingests these logs in to Kafka
-- And then use Sink(s) to replicate those changes
-
---- 
-
-# CDC
-
-[.column]
-
-## Pros
-- Near-live
-- Includes all inserts, updates, _and hard deletes_
-
-
-[.column]
-
-## Cons
-- Requires access to database replication logs
-- Harder to setup than a query-based Source/Sink
 
 ---
 
 ## Resources
 
-- https://www.confluent.io/blog/kafka-connect-deep-dive-jdbc-source-connector
-- https://docs.confluent.io/kafka-connect-jdbc/current/source-connector/
-- https://dzone.com/articles/kafka-connect-strategies-to-handle-updates-and-del
-- https://rmoff.net/2018/12/12/streaming-data-from-oracle-into-kafka/
-
----
-
-## Resources (cont.)
-- https://talks.rmoff.net/ixPL5r/integrating-oracle-and-kafka
-- https://talks.rmoff.net/ScGJTe
-- https://docs.confluent.io/kafka-connect-jdbc/current/sink-connector/index.html
+- [Kafka Connect Deep Dive – JDBC Source Connector](https://www.confluent.io/blog/kafka-connect-deep-dive-jdbc-source-connector)
+- [Kafka Connect: Strategies To Handle Updates and Deletes](https://dzone.com/articles/kafka-connect-strategies-to-handle-updates-and-del)
+- [Streaming data from Oracle into Kafka](https://rmoff.net/2018/12/12/streaming-data-from-oracle-into-kafka/)
+- [Kafka Connect 101: Introduction to Kafka Connect](https://www.youtube.com/watch?v=lRBpR5td2nc&list=PLa7VYi0yPIH0uIC2F0M1_FsVUsx8j3ekm)
+- [JDBC Source Connector: What could go wrong?](https://www.confluent.io/en-gb/events/kafka-summit-london-2022/jdbc-source-connector-what-could-go-wrong/)
+- [Integrating Oracle and Kafka](https://talks.rmoff.net/ixPL5r/integrating-oracle-and-kafka)
+- [From Zero to Hero with Kafka Connect](https://talks.rmoff.net/ScGJTe)
 
 --- 
 
-## Links
+## Presentation Links
 
-- [These slides](https://z.umn.edu/connect_ideaa) (https://z.umn.edu/connect_ideaa)
-- [The demo video](https://z.umn.edu/connect_ideaa_demo) (https://z.umn.edu/connect_ideaa_demo)
+- [These slides](https://z.umn.edu/connect_ideaa) 
+  - `https://z.umn.edu/connect_ideaa`
+- [The demo video](https://z.umn.edu/connect_ideaa_demo)
+  - `https://z.umn.edu/connect_ideaa_demo`
 - Me
-  - whit0694@umn.edu
-  - `ian_whitney` on the Tech People Slack (https://tech-people.umn.edu/join-slack)
-  - Or just hop in the `#kafka` channel
+  - whit0694@umn.edu/Ian Whitney on OIT and Tech People Slacks
+  - It is literally my job to talk about Kafka
